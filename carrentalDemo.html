@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gjun Rent | 線上租車</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            padding-top: 70px;
+            /* 給固定 Navbar 留空間 */
+        }
+
+        .car-card img {
+            height: 250px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 🔹 導覽列 Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">GOTO Rent</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="http://127.0.0.1:5500/test/carrentalDemo.html">首頁</a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm ms-lg-3" onclick="location.href='orders.html'">
+                            我的訂單
+                        </button>
+                    </li>
+
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm ms-lg-3" data-bs-toggle="modal"
+                            data-bs-target="#loginModal">
+                            會員登入
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 🔹 搜尋條件區塊 -->
+    <header class="bg-light border-bottom">
+        <div class="container py-4">
+            <h1 class="h4 mb-3">搜尋租車</h1>
+            <form id="search-form" class="row gy-2 gx-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">取車分店</label>
+                    <select class="form-select" id="pickupLocation">
+                        <option value="">不限</option>
+                        <option value="taipei">台北</option>
+                        <option value="HsinChu">新竹</option>
+                        <option value="Taichung">台中</option>
+                        <option value="kaoSiung">高雄</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">取車日期</label>
+                    <input type="date" class="form-control" id="pickupDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">還車日期</label>
+                    <input type="date" class="form-control" id="returnDate">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">車型</label>
+                    <select class="form-select" id="carType">
+                        <option value="">不限</option>
+                        <option value="eco">經濟小型車</option>
+                        <option value="sedan">中型房車</option>
+                        <option value="suv">SUV</option>
+                        <option value="van">七人座</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <button type="button" id="searchBtn" class="btn btn-primary w-100 w-md-auto">
+                        搜尋可租車輛
+                    </button>
+                </div>
+            </form>
+        </div>
+    </header>
+
+    <!-- 🔹 主內容區：車輛列表 + 訂單摘要 -->
+    <main class="container my-4">
+        <div class="row">
+            <!-- 車輛列表 -->
+            <div class="col-lg-8">
+                <h2 class="h5 mb-3">可租車輛</h2>
+                <div id="car-list" class="row g-3">
+                    <!-- 這裡用 JS render 車卡片 -->
+                </div>
+            </div>
+
+            <!-- 訂單摘要 -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        訂單摘要
+                    </div>
+                    <div class="card-body" id="booking-summary">
+                        <p class="text-muted mb-1">尚未選擇車輛</p>
+                        <small class="text-muted">請從左側列表選擇一台車。</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 🔹 預約 Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">確認預約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="modal-car-name" class="fw-bold"></p>
+                    <p id="modal-car-info" class="mb-2"></p>
+                    <p id="modal-date-info" class="text-muted small"></p>
+
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label">租車人姓名</label>
+                        <input type="text" class="form-control" id="customerName" placeholder="請輸入真實姓名">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">聯絡電話</label>
+                        <input type="tel" class="form-control" id="customerPhone" placeholder="09xx-xxx-xxx">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <label class="form-check-label">加購嬰兒車</label>
+                        <input type="checkbox" name="babycart" class="form-check-input" id="addItem_1">
+
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <label class="form-check-label">加購安心車險</label>
+                        <input type="checkbox" name="insurance" class="form-check-input" id="addItem_2">
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmBookingBtn">
+                        送出預約（假）
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 會員登入 Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- 標頭 -->
+                <div class="modal-header">
+                    <h5 class="modal-title">會員登入</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- 內容 -->
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" placeholder="example@email.com"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">密碼</label>
+                            <input type="password" class="form-control" id="loginPassword" placeholder="請輸入密碼" required>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">
+                                    記住我
+                                </label>
+                            </div>
+                            <a href="#" class="small">忘記密碼？</a>
+                        </div>
+
+                        <div class="alert alert-danger py-2 px-3 d-none" id="loginError">
+                            登入失敗，請確認帳號或密碼。
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 按鈕列 -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary" id="loginSubmitBtn">
+                        登入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 🔹 頁面腳本：目前先用假資料，之後改成呼叫 RESTful API -->
+    <script>
+
+        // 假登入：帳號 test@example.com / 密碼 123456
+        document.getElementById("loginSubmitBtn").addEventListener("click", function () {
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+            const errorBox = document.getElementById("loginError");
+
+            if (!email || !password) {
+                errorBox.classList.remove("d-none");
+                errorBox.textContent = "請輸入 Email 和密碼。";
+                return;
+            }
+
+            // 之後可改成呼叫後端 /api/login
+            // 現在先寫死做示範
+            if (email === "test@example.com" && password === "123456") {
+                errorBox.classList.add("d-none");
+                alert("登入成功（目前為前端測試用）");
+
+                // TODO: 可以在這裡更新 Navbar 顯示「您好，XXX」
+                // 關閉 modal
+                const modalEl = document.getElementById("loginModal");
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+            } else {
+                errorBox.classList.remove("d-none");
+                errorBox.textContent = "登入失敗，請確認帳號或密碼。";
+            }
+        });
+
+        // 之後接後端的時候，大概會長這樣：
+        /*
+        fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        }).then(res => {
+            if (!res.ok) throw new Error();
+            return res.json();
+        }).then(user => {
+            // 登入成功處理
+        }).catch(err => {
+            // 顯示錯誤
+        });
+        */
+
+
+        // ➜ 之後可以改成從 /api/cars 取得
+        const sampleCars = [
+            {
+                id: 1,
+                name: "Toyota Vios 或同級",
+                type: "eco",
+                pricePerDay: 1200,
+                seats: 5,
+                luggage: 2,
+                imageUrl: "./imgs/ToYoTa.jpeg"
+            },
+            {
+                id: 2,
+                name: "Honda Civic 或同級",
+                type: "sedan",
+                pricePerDay: 1800,
+                seats: 5,
+                luggage: 3,
+                imageUrl: "./imgs/Honda.jpeg"
+            },
+            {
+                id: 3,
+                name: "Toyota RAV4 或同級",
+                type: "suv",
+                pricePerDay: 2400,
+                seats: 5,
+                luggage: 4,
+                imageUrl: "./imgs/Toyota RAV4.jpeg"
+            },
+            {
+                id: 4,
+                name: "Volkswagen T6 九人座",
+                type: "van",
+                pricePerDay: 3200,
+                seats: 9,
+                luggage: 5,
+                imageUrl: "./imgs/Volkswagen T6.jpeg"
+            }
+        ];
+
+        let selectedCar = null;
+
+        // 渲染車輛卡片
+        function renderCars(cars) {
+            const carList = document.getElementById("car-list");
+            carList.innerHTML = "";
+
+            if (!cars || cars.length === 0) {
+                carList.innerHTML = '<p class="text-muted">沒有符合條件的車輛。</p>';
+                return;
+            }
+
+            cars.forEach(car => {
+                const col = document.createElement("div");
+                col.className = "col-md-6";
+
+                col.innerHTML = `
+                <div class="card car-card h-100">
+                    <img src="${car.imageUrl}" class="card-img-top" alt="${car.name}">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">${car.name}</h5>
+                        <p class="card-text mb-1">
+                            座位：${car.seats} 人 ｜ 行李：${car.luggage} 件
+                        </p>
+                        <p class="card-text fw-bold text-primary mb-2">
+                            NT$ ${car.pricePerDay} / 日
+                        </p>
+                        <button class="btn btn-outline-primary mt-auto"
+                                onclick="openBooking(${car.id})">
+                            立即預約
+                        </button>
+                    </div>
+                </div>
+            `;
+                carList.appendChild(col);
+            });
+        }
+
+        // 開啟預約視窗
+        function openBooking(carId) {
+            selectedCar = sampleCars.find(c => c.id === carId);
+            if (!selectedCar) return;
+
+            // 更新 Modal 內容
+            document.getElementById("modal-car-name").innerText = selectedCar.name;
+            document.getElementById("modal-car-info").innerText =
+                `NT$ ${selectedCar.pricePerDay} / 日，${selectedCar.seats} 人座，行李 ${selectedCar.luggage} 件`;
+
+            const pickup = document.getElementById("pickupDate").value || "(未選取取車日期)";
+            const ret = document.getElementById("returnDate").value || "(未選取還車日期)";
+            document.getElementById("modal-date-info").innerText =
+                `租期：${pickup}  ~  ${ret}`;
+
+            // 更新右側摘要
+            const summary = document.getElementById("booking-summary");
+            summary.innerHTML = `
+            <p class="mb-1 fw-bold">${selectedCar.name}</p>
+            <p class="mb-1 text-primary">NT$ ${selectedCar.pricePerDay} / 日</p>
+            <p class="small text-muted mb-0">取車日期：${pickup}</p>
+            <p class="small text-muted">還車日期：${ret}</p>
+        `;
+
+            const modal = new bootstrap.Modal(document.getElementById("bookingModal"));
+            modal.show();
+        }
+
+        // 監聽搜尋按鈕（目前只做前端篩選）
+        document.getElementById("searchBtn").addEventListener("click", function () {
+            const type = document.getElementById("carType").value;
+
+            let filtered = sampleCars;
+            if (type) {
+                filtered = sampleCars.filter(c => c.type === type);
+            }
+
+            // ➜ 之後這裡可改成呼叫後端，例如：
+            //   fetch(`/api/cars?type=${type}&pickupDate=...`)
+            renderCars(filtered);
+        });
+
+        // 假的預約送出（之後改成呼叫 POST /api/bookings）
+        document.getElementById("confirmBookingBtn").addEventListener("click", function () {
+            const name = document.getElementById("customerName").value.trim();
+            const phone = document.getElementById("customerPhone").value.trim();
+
+            if (!name || !phone) {
+                alert("請輸入姓名與電話");
+                return;
+            }
+
+            // ➜ 未來你可以在這裡呼叫後端 API，例如：
+            // fetch('/api/bookings', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({
+            //         carId: selectedCar.id,
+            //         customerName: name,
+            //         customerPhone: phone,
+            //         pickupDate: document.getElementById("pickupDate").value,
+            //         returnDate: document.getElementById("returnDate").value
+            //     })
+            // }).then(...)
+
+            alert("目前是前端假預約，之後可以接上 RESTful 後端。");
+
+            const modalEl = document.getElementById("bookingModal");
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        });
+
+        // 頁面載入時先顯示全部車輛
+        document.addEventListener("DOMContentLoaded", function () {
+            renderCars(sampleCars);
+        });
+    </script>
+
+</body>
+
+</html>
