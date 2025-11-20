@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂閱車服務 | GOTO Rent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --bs-primary-rgb: 40, 167, 69;
+        }
+
+        body {
+            padding-top: 76px;
+            background-color: #f4f7f9;
+        }
+
+        /* 篩選區塊 */
+        .filter-box {
+            background: #fff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 車輛卡片 */
+        .sub-card {
+            border: none;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: .2s;
+            background: #fff;
+        }
+
+        .sub-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .sub-card img {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .price-highlight {
+            font-size: 1.5rem;
+            color: var(--bs-primary);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold fst-italic" href="index.html"><i class="bi bi-car-front-fill me-2"></i>GOTO
+                Rent</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span
+                    class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">首頁</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="subscription.html">訂閱車</a></li>
+                    <li class="nav-item"><a class="nav-link" href="chauffeur.html">附駕接送</a></li>
+                    <li class="nav-item"><a class="nav-link" href="mambers.html">我的訂單</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-white shadow-sm mb-4">
+        <div class="container py-4 text-center">
+            <h1 class="display-6 fw-bold text-primary">🚗 靈活訂閱，擁車新選擇</h1>
+            <p class="text-muted">包含保險、稅金與保養，月付定額輕鬆開新車。</p>
+        </div>
+    </header>
+
+    <main class="container mb-5">
+        <div class="row g-4">
+            <div class="col-lg-3">
+                <div class="filter-box p-4 sticky-top" style="top: 100px;">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-funnel"></i> 條件篩選</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">品牌 Brand</label>
+                        <select class="form-select" id="filter-brand">
+                            <option value="all">全部品牌</option>
+                            <option value="Toyota">Toyota</option>
+                            <option value="Honda">Honda</option>
+                            <option value="Lexus">Lexus</option>
+                            <option value="Tesla">Tesla</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">月費預算 Budget</label>
+                        <select class="form-select" id="filter-price">
+                            <option value="all">不限金額</option>
+                            <option value="low">20,000 以下</option>
+                            <option value="mid">20,000 - 40,000</option>
+                            <option value="high">40,000 以上</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary w-100" id="btn-filter">套用篩選</button>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div id="loading-spinner" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"><span
+                            class="visually-hidden">Loading...</span></div>
+                </div>
+                <div id="car-list" class="row g-4">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // 模擬後端 API 回傳資料
+            // 未來對接：GET /api/subscriptions/cars
+            const mockCars = [
+                { id: 1, brand: "Toyota", model: "Corolla Cross", price: 16800, img: "https://fakeimg.pl/400x250/?text=Toyota", tags: ["省油", "休旅"] },
+                { id: 2, brand: "Honda", model: "CR-V", price: 21500, img: "https://fakeimg.pl/400x250/?text=Honda", tags: ["大空間"] },
+                { id: 3, brand: "Tesla", model: "Model 3", price: 35000, img: "https://fakeimg.pl/400x250/?text=Tesla", tags: ["電動車", "科技"] },
+                { id: 4, brand: "Lexus", model: "NX 200", price: 42000, img: "https://fakeimg.pl/400x250/?text=Lexus", tags: ["豪華", "舒適"] },
+                { id: 5, brand: "Toyota", model: "Altis", price: 13500, img: "https://fakeimg.pl/400x250/?text=Altis", tags: ["經濟", "代步"] }
+            ];
+
+            // 初始化
+            setTimeout(() => {
+                renderCars(mockCars);
+                $('#loading-spinner').hide();
+            }, 500);
+
+            // 渲染函式
+            function renderCars(cars) {
+                const container = $('#car-list');
+                container.empty();
+
+                if (cars.length === 0) {
+                    container.html('<div class="col-12 text-center text-muted">沒有符合條件的車輛</div>');
+                    return;
+                }
+
+                $.each(cars, function (i, car) {
+                    // 標籤 HTML
+                    const tagsHtml = car.tags.map(t => `<span class="badge bg-light text-secondary border me-1">${t}</span>`).join('');
+
+                    const html = `
+                        <div class="col-md-6 col-xl-4">
+                            <div class="card sub-card h-100">
+                                <img src="${car.img}" class="card-img-top" alt="${car.model}">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="mb-2">
+                                        <small class="text-muted text-uppercase fw-bold">${car.brand}</small>
+                                        <h5 class="card-title fw-bold">${car.model}</h5>
+                                    </div>
+                                    <div class="mb-3">${tagsHtml}</div>
+                                    
+                                    <div class="mt-auto">
+                                        <div class="d-flex align-items-end mb-3">
+                                            <span class="price-highlight">NT$ ${car.price.toLocaleString()}</span>
+                                            <span class="text-muted ms-1 mb-2">/ 月起</span>
+                                        </div>
+                                        <button class="btn btn-outline-primary w-100" onclick="alert('前往訂閱申請頁面 (ID: ${car.id})')">
+                                            查看方案
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.append(html);
+                });
+            }
+
+            // 篩選邏輯
+            $('#btn-filter').click(function () {
+                const brand = $('#filter-brand').val();
+                const priceLevel = $('#filter-price').val();
+
+                const filtered = mockCars.filter(car => {
+                    const matchBrand = brand === 'all' || car.brand === brand;
+                    let matchPrice = true;
+                    if (priceLevel === 'low') matchPrice = car.price < 20000;
+                    if (priceLevel === 'mid') matchPrice = car.price >= 20000 && car.price < 40000;
+                    if (priceLevel === 'high') matchPrice = car.price >= 40000;
+
+                    return matchBrand && matchPrice;
+                });
+                renderCars(filtered);
+            });
+        });
+    </script>
+</body>
+
+</html>

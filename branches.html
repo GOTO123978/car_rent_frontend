@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服務據點 | GOTO Rent</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --bs-primary-rgb: 40, 167, 69;
+        }
+
+        body {
+            padding-top: 76px;
+            background-color: #f4f7f9;
+        }
+
+        .branch-card {
+            border: none;
+            border-radius: 0.75rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+
+        .branch-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .map-thumb {
+            height: 180px;
+            width: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .map-container:hover .map-thumb {
+            transform: scale(1.05);
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .map-container:hover .map-overlay {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold fst-italic" href="index.html"><i class="bi bi-car-front-fill me-2"></i>GOTO
+                Rent</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span
+                    class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">首頁</a></li>
+                    <li class="nav-item dropdown">
+                        <button class="nav-link dropdown-toggle btn btn-link p-0 active" id="branchDropdown"
+                            data-bs-toggle="dropdown">服務據點</button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="branches.html?region=北部">北部租車</a></li>
+                            <li><a class="dropdown-item" href="branches.html?region=中部">中部租車</a></li>
+                            <li><a class="dropdown-item" href="branches.html?region=南部">南部租車</a></li>
+                            <li><a class="dropdown-item" href="branches.html?region=東部">東部租車</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="branches.html?region=ALL">所有據點</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="mambers.html">我的訂單</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-white shadow-sm mb-4">
+        <div class="container py-4">
+            <h1 class="display-6 fw-bold text-primary" id="page-title">
+                <i class="bi bi-geo-alt-fill"></i> 服務據點
+            </h1>
+            <p class="text-muted mb-0" id="page-desc">提供全台各地便捷的租車服務。</p>
+        </div>
+    </header>
+
+    <main class="container mb-5">
+        <div id="loading-spinner" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
+        <div id="branch-list" class="row g-4"></div>
+    </main>
+
+    <div class="modal fade" id="mapModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="mapModalTitle">地圖預覽</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <img id="mapModalImg" src="" alt="地圖放大圖" class="img-fluid w-100 rounded shadow-sm">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. 擴充 Mock Data (包含中南部以測試篩選功能)
+            const mockAllBranches = [
+                // 北部
+                { branch_id: "taipei", region: "北部", name_zh: "台北車站店", name_en: "Taipei Station", address: "臺北市大同區重慶北路一段26巷19號", phone_number: "(02) 2765-8888", opening_hours: "08:00 - 22:00", map_thumbnail_url: "./imgs/map-taipei.jpg" },
+                { branch_id: "taoyuan", region: "北部", name_zh: "桃園機場店", name_en: "Taoyuan Airport", address: "桃園市大園區航站北路 9 號", phone_number: "(03) 393-0123", opening_hours: "24HR", map_thumbnail_url: "./imgs/map-taoyuan.jpg" },
+                // 中部
+                { branch_id: "taichung", region: "中部", name_zh: "台中高鐵店", name_en: "Taichung HSR", address: "台中市烏日區站區二路8號", phone_number: "(04) 3600-1234", opening_hours: "07:00 - 23:00", map_thumbnail_url: "https://fakeimg.pl/400x250/?text=Taichung" },
+                // 南部
+                { branch_id: "tainan", region: "南部", name_zh: "台南火車站店", name_en: "Tainan Station", address: "台南市東區北門路二段", phone_number: "(06) 222-5678", opening_hours: "09:00 - 21:00", map_thumbnail_url: "https://fakeimg.pl/400x250/?text=Tainan" },
+                { branch_id: "kaohsiung", region: "南部", name_zh: "左營高鐵店", name_en: "Zuoying HSR", address: "高雄市左營區高鐵路", phone_number: "(07) 960-9999", opening_hours: "08:00 - 22:00", map_thumbnail_url: "https://fakeimg.pl/400x250/?text=Kaohsiung" }
+            ];
+
+            // 2. 解析 URL 參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentRegion = urlParams.get('region') || 'ALL'; // 預設為 ALL
+
+            // 3. 更新頁面標題與描述
+            updatePageHeader(currentRegion);
+
+            // 4. 載入資料 (模擬後端 API 查詢)
+            loadBranches(currentRegion);
+
+
+            function updatePageHeader(region) {
+                let titleText = "所有服務據點";
+                if (region !== 'ALL') {
+                    titleText = `${region}服務據點`;
+                }
+
+                $('#page-title').html(`<i class="bi bi-geo-alt-fill"></i> ${titleText}`);
+                document.title = `${titleText} | GOTO Rent`; // 同步修改瀏覽器標籤
+            }
+
+            function loadBranches(region) {
+                $('#loading-spinner').show();
+                $('#branch-list').empty();
+
+                setTimeout(function () {
+                    // --- 模擬後端 Controller 的篩選邏輯 ---
+                    // 未來： $.ajax({ url: `/api/branches?region=${region}`, ... })
+
+                    let filteredData = mockAllBranches;
+                    if (region !== 'ALL') {
+                        filteredData = mockAllBranches.filter(b => b.region === region);
+                    }
+                    // --------------------------------------
+
+                    renderCards(filteredData);
+                    $('#loading-spinner').hide();
+                }, 300);
+            }
+
+            function renderCards(branches) {
+                if (!branches || branches.length === 0) {
+                    $('#branch-list').html(`
+                        <div class="col-12 text-center py-5">
+                            <div class="text-muted display-1"><i class="bi bi-search"></i></div>
+                            <p class="mt-3 text-muted">此區域目前尚無服務據點。</p>
+                            <a href="branches.html?region=ALL" class="btn btn-outline-primary">查看所有據點</a>
+                        </div>
+                    `);
+                    return;
+                }
+
+                $.each(branches, function (index, branch) {
+                    const mapQueryUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.address)}`;
+
+                    const cardHtml = `
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card branch-card h-100 shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <h4 class="card-title fw-bold text-primary mb-1">${branch.name_zh}</h4>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">${branch.region}</span>
+                                        </div>
+                                        <p class="card-subtitle text-muted small">${branch.name_en}</p>
+                                    </div>
+                                    <ul class="list-group list-group-flush mb-3 small flex-grow-1 border-0">
+                                        <li class="list-group-item border-0 px-0"><i class="bi bi-geo-alt-fill text-success me-2"></i><a href="${mapQueryUrl}" target="_blank" class="text-decoration-none text-dark fw-bold">${branch.address}</a></li>
+                                        <li class="list-group-item border-0 px-0"><i class="bi bi-telephone-fill text-success me-2"></i>${branch.phone_number}</li>
+                                        <li class="list-group-item border-0 px-0"><i class="bi bi-clock-fill text-success me-2"></i>${branch.opening_hours}</li>
+                                    </ul>
+                                    <div class="map-container mb-3" data-bs-toggle="modal" data-bs-target="#mapModal" data-title="${branch.name_zh}" data-img="${branch.map_thumbnail_url}">
+                                        <img src="${branch.map_thumbnail_url}" class="map-thumb">
+                                        <div class="map-overlay"><button class="btn btn-light btn-sm rounded-pill shadow"><i class="bi bi-zoom-in"></i> 放大</button></div>
+                                    </div>
+                                    <a href="index.html?branchId=${branch.branch_id}" class="btn btn-primary w-100 mt-auto">立即預約</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $('#branch-list').append(cardHtml);
+                });
+            }
+
+            // Modal 圖片切換
+            $('#mapModal').on('show.bs.modal', function (event) {
+                const btn = $(event.relatedTarget);
+                $(this).find('#mapModalTitle').text(btn.data('title') + " 地圖");
+                $(this).find('#mapModalImg').attr('src', btn.data('img'));
+            });
+        });
+    </script>
+
+</body>
+
+</html>
