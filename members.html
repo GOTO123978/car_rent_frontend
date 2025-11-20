@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>會員中心 - 我的訂單 | GOTO Rent</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            /* 沿用 index.html 的主色調 */
+            --bs-primary-rgb: 40, 167, 69;
+        }
+
+        body {
+            padding-top: 70px;
+            background-color: #f4f7f9;
+        }
+
+        /* 會員資訊區塊 */
+        .profile-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+
+        /* 訂單卡片樣式 */
+        .order-card {
+            border-radius: 0.75rem;
+            transition: box-shadow 0.2s;
+            overflow: hidden;
+        }
+
+        .order-card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            cursor: default;
+            /* 取消 hover 的手形 */
+        }
+
+        /* 訂單中的車輛圖片 */
+        .order-car-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        /* 狀態標籤顏色 (新增) */
+        .status-badge-running {
+            background-color: var(--bs-warning);
+            color: #333;
+            /* 讓文字清晰 */
+        }
+
+        .status-badge-completed {
+            background-color: var(--bs-success);
+        }
+
+        .status-badge-cancelled {
+            background-color: var(--bs-danger);
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">GOTO Rent</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">首頁</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <button class="nav-link dropdown-toggle btn btn-link p-0" id="branchDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            服務據點
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="branchDropdown">
+                            <li><a class="dropdown-item" href="branches-north.html">北部租車</a></li>
+                            <li><a class="dropdown-item" href="branches-central.html">中部租車</a></li>
+                            <li><a class="dropdown-item" href="branches-south.html">南部租車</a></li>
+                            <li><a class="dropdown-item" href="branches-east.html">東部租車</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-light btn-sm ms-lg-3 active" disabled>
+                            我的訂單
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm ms-lg-3" data-bs-toggle="modal"
+                            data-bs-target="#loginModal">
+                            會員登出
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <main class="container my-5">
+        <div class="row g-4">
+
+            <div class="col-lg-4">
+                <div class="profile-card">
+                    <h2 class="h4 fw-bold mb-3 text-primary">
+                        <i class="bi bi-person-circle me-2"></i> 會員中心
+                    </h2>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            姓名: <span id="member-name" class="fw-bold">王曉明</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            電話: <span id="member-phone">0912-345-678</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            Email: <span id="member-email">wang@gjun.com</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            累積租車次數: <span id="member-count" class="badge bg-info text-dark">5 次</span>
+                        </li>
+                    </ul>
+                    <div class="d-grid mt-4">
+                        <button class="btn btn-outline-secondary btn-sm">修改密碼 / 資料</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <h2 class="h4 fw-bold mb-4 border-bottom pb-2">
+                    <i class="bi bi-list-columns-reverse me-2"></i> 我的訂單 (總計 <span id="order-count">0</span> 筆)
+                </h2>
+
+                <div id="order-list" class="row g-4">
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <div class="modal fade" id="editDateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">修改租期 - 訂單號 <span id="editing-order-id"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">目前僅允許修改取車與還車日期，其他資訊請洽客服。</p>
+                    <div class="mb-3">
+                        <label for="newPickupDate" class="form-label">新的取車日期</label>
+                        <input type="date" class="form-control" id="newPickupDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newReturnDate" class="form-label">新的還車日期</label>
+                        <input type="date" class="form-control" id="newReturnDate">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmEditBtn">確認修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ➜ 之後可以改成從 /api/members/orders 取得
+        const sampleOrders = [
+            {
+                orderId: "A2024001",
+                carName: "Toyota RAV4 或同級",
+                pickupDate: "2024-06-15",
+                returnDate: "2024-06-18",
+                totalPrice: 7200,
+                status: "進行中", // 進行中, 已完成, 已取消
+                pickupLoc: "台北信義店",
+                img: "./imgs/Toyota RAV4.jpeg"
+            },
+            {
+                orderId: "B2023120",
+                carName: "Honda Civic 或同級",
+                pickupDate: "2023-12-24",
+                returnDate: "2023-12-28",
+                totalPrice: 8000,
+                status: "已完成",
+                pickupLoc: "新竹高鐵店",
+                img: "./imgs/Honda.jpeg"
+            },
+            {
+                orderId: "C2024033",
+                carName: "Toyota Vios 或同級",
+                pickupDate: "2024-03-01",
+                returnDate: "2024-03-02",
+                totalPrice: 1500,
+                status: "已取消",
+                pickupLoc: "桃園機場店",
+                img: "./imgs/ToYoTa.jpeg"
+            }
+        ];
+
+        let editingOrderId = null;
+
+        // 取得狀態標籤樣式
+        function getStatusBadge(status) {
+            let className = 'bg-secondary';
+            let icon = 'bi-x-circle';
+            switch (status) {
+                case '進行中':
+                    className = 'status-badge-running';
+                    icon = 'bi-hourglass-split';
+                    break;
+                case '已完成':
+                    className = 'status-badge-completed';
+                    icon = 'bi-check-circle-fill';
+                    break;
+                case '已取消':
+                    className = 'status-badge-cancelled';
+                    icon = 'bi-x-octagon-fill';
+                    break;
+            }
+            return `<span class="badge ${className} text-white fw-bold"><i class="bi ${icon} me-1"></i> ${status}</span>`;
+        }
+
+        // 渲染訂單列表 (使用新樣式)
+        function renderOrders() {
+            const orderList = document.getElementById("order-list");
+            orderList.innerHTML = "";
+
+            document.getElementById("order-count").textContent = sampleOrders.length;
+
+            sampleOrders.forEach(order => {
+                const col = document.createElement("div");
+                col.className = "col-md-12"; // 訂單卡片使用整行寬度
+
+                const statusBadge = getStatusBadge(order.status);
+
+                // 根據狀態決定按鈕
+                let actionButton = '';
+                if (order.status === '進行中') {
+                    actionButton = `
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="openEditModal('${order.orderId}')">
+                            <i class="bi bi-calendar-range"></i> 修改日期
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder('${order.orderId}')">
+                            <i class="bi bi-trash"></i> 取消訂單
+                        </button>
+                    `;
+                } else if (order.status === '已完成') {
+                    actionButton = `
+                        <button class="btn btn-sm btn-success" disabled>
+                            <i class="bi bi-check-lg"></i> 交易完成
+                        </button>
+                    `;
+                } else {
+                    // 已取消
+                    actionButton = `
+                        <button class="btn btn-sm btn-light text-danger" disabled>
+                            <i class="bi bi-x-lg"></i> 無法操作
+                        </button>
+                    `;
+                }
+
+                col.innerHTML = `
+                    <div class="card order-card shadow-sm">
+                        <div class="row g-0">
+                            <div class="col-md-3">
+                                <img src="${order.img}" alt="${order.carName}" class="order-car-img rounded-start">
+                            </div>
+
+                            <div class="col-md-9">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title fw-bold text-truncate">${order.carName}</h5>
+                                        ${statusBadge}
+                                    </div>
+                                    
+                                    <p class="card-text small mb-2 text-muted">
+                                        <i class="bi bi-bookmark-fill me-1"></i> 訂單編號: <strong>${order.orderId}</strong>
+                                    </p>
+                                    <p class="card-text small mb-2">
+                                        <i class="bi bi-calendar-range-fill text-primary me-1"></i> 租期: 
+                                        ${order.pickupDate} <i class="bi bi-arrow-right"></i> ${order.returnDate}
+                                    </p>
+                                    <p class="card-text small mb-2">
+                                        <i class="bi bi-geo-alt-fill text-primary me-1"></i> 取車點: 
+                                        ${order.pickupLoc}
+                                    </p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                        <h6 class="mb-0 text-danger fw-bold">
+                                            總金額: NT$ ${order.totalPrice.toLocaleString()}
+                                        </h6>
+                                        <div>
+                                            ${actionButton}
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                orderList.appendChild(col);
+            });
+        }
+
+
+        // ============ 修改日期 Modal 邏輯 ============
+
+        function openEditModal(orderId) {
+            editingOrderId = orderId;
+            const order = sampleOrders.find(o => o.orderId === orderId);
+            if (!order || order.status !== "進行中") return;
+
+            document.getElementById("editing-order-id").textContent = orderId;
+
+            // 設定 Modal 日期預設值與限制
+            document.getElementById("newPickupDate").value = order.pickupDate;
+            document.getElementById("newReturnDate").value = order.returnDate;
+            document.getElementById("newPickupDate").min = new Date().toISOString().split('T')[0]; // 取車不能早於今天
+            document.getElementById("newReturnDate").min = order.pickupDate;
+
+            // 顯示 Modal
+            const modal = new bootstrap.Modal(document.getElementById('editDateModal'));
+            modal.show();
+        }
+
+        document.getElementById("confirmEditBtn").addEventListener("click", function () {
+            const newPickupDate = document.getElementById("newPickupDate").value;
+            const newReturnDate = document.getElementById("newReturnDate").value;
+
+            if (!newPickupDate || !newReturnDate) {
+                alert("請選擇完整的租車日期。");
+                return;
+            }
+
+            if (newReturnDate <= newPickupDate) {
+                alert("還車日期必須晚於取車日期。");
+                return;
+            }
+
+            const order = sampleOrders.find(o => o.orderId === editingOrderId);
+            if (!order) return;
+
+            // 前端直接改狀態（示範用）
+            order.pickupDate = newPickupDate;
+            order.returnDate = newReturnDate;
+
+            // 關閉 Modal
+            const modalEl = document.getElementById("editDateModal");
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            // 重新 render
+            renderOrders();
+
+            // 實務上應該改成 call API：
+            // fetch(`/api/orders/${editingOrderId}/period`, { method: "PUT", body: JSON.stringify({...}) })
+            alert(`訂單 ${editingOrderId} 已更新！目前僅為前端示範，實務上需呼叫後端 API 更新訂單。`);
+        });
+
+        // ============ 取消訂單 ============\
+
+        function cancelOrder(orderId) {
+            const order = sampleOrders.find(o => o.orderId === orderId);
+            if (!order) return;
+
+            if (order.status !== "進行中") {
+                alert("只有進行中的訂單可以取消。");
+                return;
+            }
+
+            if (!confirm(`確定要取消訂單 ${orderId} 嗎？`)) {
+                return;
+            }
+
+            // 前端直接改狀態（示範用）
+            order.status = "已取消";
+            renderOrders();
+
+            // 實務上這裡應該是：
+            // fetch(`/api/orders/${orderId}/cancel`, { method: "POST" })
+            alert(`訂單 ${orderId} 已取消。`);
+        }
+
+        // ============ 初始化 ============\
+
+        document.addEventListener("DOMContentLoaded", function () {
+            renderOrders();
+
+            // 之後可以把會員資訊從登入後的資料帶進來
+        });
+    </script>
+
+</body>
+
+</html>
