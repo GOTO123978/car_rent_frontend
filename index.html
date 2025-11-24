@@ -177,7 +177,7 @@
                 </div>
             </div>
             <div class="col-lg-8 order-lg-1">
-                <h2 class="h5 mb-4 border-bottom pb-2">✅ 搜尋結果</h2>
+
                 <div id="car-list" class="row g-4"></div>
             </div>
         </div>
@@ -250,69 +250,67 @@
 
     <script src="js/member.js"></script>
 
+    <script src="js/member.js"></script>
+
     <script>
-        // (保留原本的車輛渲染邏輯，但移除舊的登入與預約處理，因為已經外包給 member.js 或直接寫在 HTML onclick)
+        // 定義全域變數儲存車輛資料，以供前端篩選使用
+        let allCarsData = [];
 
-        const sampleCars = [
-            {
-                id: 1,
-                name: "Toyota Vios 或同級",
-                type: "eco",
-                pricePerDay: 1200,
-                seats: 5,
-                luggage: 2,
-                imageUrl: "./imgs/ToYoTa.jpeg"
-            },
-            {
-                id: 2,
-                name: "Honda Civic 或同級",
-                type: "sedan",
-                pricePerDay: 1800,
-                seats: 5,
-                luggage: 3,
-                imageUrl: "./imgs/Honda.jpeg"
-            },
-            {
-                id: 3,
-                name: "Toyota RAV4 或同級",
-                type: "suv",
-                pricePerDay: 2400,
-                seats: 5,
-                luggage: 4,
-                imageUrl: "./imgs/Toyota RAV4.jpeg"
-            },
-            {
-                id: 4,
-                name: "Volkswagen T6 九人座",
-                type: "van",
-                pricePerDay: 3200,
-                seats: 9,
-                luggage: 5,
-                imageUrl: "./imgs/Volkswagen T6.jpeg"
-            }
-        ];
+        // 1. 從後端 API 載入車輛資料
+        function loadCarsFromBackend() {
+            $.ajax({
+                url: "http://localhost:8080/api/car", // 對應 CarController
+                type: "GET",
+                dataType: "json",
+                success: function (data) {
+                    console.log("車輛資料載入成功:", data);
+                    allCarsData = data; // 存起來供搜尋用
+                    renderCars(data);   // 渲染畫面
+                },
+                error: function (xhr) {
+                    console.error("無法載入車輛資料", xhr);
+                    // 如果 API 失敗，顯示錯誤或保留空畫面
+                    document.getElementById("car-list").innerHTML =
+                        '<p class="text-danger text-center">無法連線至伺服器，請稍後再試。</p>';
+                }
+            });
+        }
 
-        let selectedCar = null;
-
+        // 2. 渲染車輛卡片 (配合後端欄位名稱)
         function renderCars(cars) {
             const carList = document.getElementById("car-list");
             carList.innerHTML = "";
+
             if (!cars || cars.length === 0) {
-                carList.innerHTML = '<p class="text-muted">沒有符合條件的車輛。</p>';
+                carList.innerHTML = '<p class="text-muted text-center">目前沒有符合條件的車輛。</p>';
                 return;
             }
+
             cars.forEach(car => {
+                // 欄位對應：imagePath, name, seats, luggage, price
+                // 若資料庫圖片路徑是相對路徑 (如 /images/car.jpg)，直接使用
+                // 若是檔名 (如 car.jpg)，需加上前綴 (如 /images/${car.imagePath})
+                const imgSrc = car.imagePath ? car.imagePath : "https://fakeimg.pl/400x250/?text=No+Image";
+
                 const col = document.createElement("div");
                 col.className = "col-md-6";
                 col.innerHTML = `
                 <div class="card car-card h-100 shadow-sm">
-                    <img src="${car.imageUrl}" class="card-img-top" alt="${car.name}">
+                    <img src="${imgSrc}" class="card-img-top" alt="${car.name}" onerror="this.src='https://fakeimg.pl/400x250/?text=Image+Error'">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title fw-bold text-truncate">${car.name}</h5>
-                        <p class="text-muted small">座位：${car.seats} | 行李：${car.luggage}</p>
+                        
+                        <div class="mb-3 small text-muted">
+                            <span class="me-3"><i class="bi bi-people-fill"></i> ${car.seats} 人座</span>
+                            <span><i class="bi bi-bag-fill"></i> ${car.luggage} 件行李</span>
+                        </div>
+                        
                         <div class="d-flex justify-content-between align-items-center mt-auto mb-3">
-                            <span class="text-danger fw-bold fs-5">NT$ ${car.pricePerDay}</span>
-                            <button class="btn btn-outline-primary btn-sm"
+                            <div>
+                                <span class="price-tag">NT$ ${car.price}</span>
+                                <span class="text-muted small">/ 日</span>
+                            </div>
+                            <button class="btn btn-danger btn-lg" 
                                     onclick="location.href='http://localhost:8080/reserve'">
                                 立即預約
                             </button>
@@ -323,40 +321,33 @@
             });
         }
 
-        // 預約視窗邏輯保留給前端展示用 (如果點擊上面的預約按鈕會直接跳轉，這個可能用不到，但保留無妨)
-        function openBooking(carId) {
-            // 直接跳轉
-            location.href = 'http://localhost:8080/reserve';
-        }
-
-        // 監聽搜尋按鈕
+        // 3. 搜尋按鈕 (前端篩選邏輯)
         document.getElementById("searchBtn").addEventListener("click", function () {
-            const type = document.getElementById("carType").value;
-            let filtered = sampleCars;
-            if (type) filtered = sampleCars.filter(c => c.type === type);
+            const selectedType = document.getElementById("carType").value;
+
+            // 如果選「不限」，顯示全部
+            if (!selectedType || selectedType === "") {
+                renderCars(allCarsData);
+                return;
+            }
+
+            // 簡單的前端篩選邏輯 (因為資料庫目前可能沒有 type 欄位)
+            // 這裡我們用「座位數」來粗略對應車型，或者您可以根據車名過濾
+            const filtered = allCarsData.filter(car => {
+                if (selectedType === "eco") return car.seats <= 5 && car.price < 2000; // 經濟型
+                if (selectedType === "sedan") return car.seats === 5; // 房車
+                if (selectedType === "suv") return car.seats === 5 && car.price >= 2000; // 休旅車
+                if (selectedType === "van") return car.seats > 5; // 多人座
+                return true;
+            });
+
             renderCars(filtered);
         });
 
+        // 4. 頁面載入時執行
         document.addEventListener("DOMContentLoaded", function () {
-            renderCars(sampleCars);
-            // member.js 會自動處理 Navbar 狀態
-        });
-        // ⭐ 關鍵：新增 JQuery Logic 來控制 Navbar 按鈕的顯示狀態
-        $(document).ready(function () {
-            // 由於 member.js 中的 Document Ready 會先跑，這裡只需覆寫控制狀態
-            const token = sessionStorage.getItem("jwtToken");
-
-            if (token) {
-                $("#myorderbtn").show();
-                $("#memberCenterBtn").show(); // ⭐ 顯示會員中心
-                $("#reserveBtn").show();
-                $("#myorderbtn").show();
-            } else {
-                $("#myorderbtn").hide();
-                $("#memberCenterBtn").hide(); // ⭐ 隱藏會員中心
-                $("#reserveBtn").hide();
-                $("#myorderbtn").hide();
-            }
+            loadCarsFromBackend(); // 呼叫 API
+            // member.js 會自動處理 Navbar 登入狀態
         });
     </script>
 
