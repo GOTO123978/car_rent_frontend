@@ -140,12 +140,23 @@ function goRegisterwindow() {
 }
 
 /* =========================================
-   5. 註冊會員邏輯
+   5. 註冊會員邏輯 (修改版)
    ========================================= */
 function addmember(e) {
-    if(e) e.preventDefault(); // 防止表單 submit 刷新
+    if(e) e.preventDefault(); 
 
-    // 簡易驗證 (建議搭配 HTML5 required)
+    // 0. 清除之前的錯誤訊息
+    $("#errorMsg").addClass("d-none").text("");
+
+    // 1. 觸發 HTML5 表單驗證 (檢查必填、Pattern 格式)
+    const form = document.getElementById("registerForm");
+    if (!form.checkValidity()) {
+        // 如果格式不對，瀏覽器會自動跳出提示，我們手動觸發它
+        form.reportValidity(); 
+        return;
+    }
+
+    // 2. 取得欄位值
     let name = $("#membername").val();
     let idnumber = $("#idnumber").val();
     let phone = $("#phone").val();
@@ -156,8 +167,9 @@ function addmember(e) {
     let registerpw = $("#registerpw").val();
     let checkpw = $("#checkpw").val();
 
+    // 3. 檢查密碼是否一致
     if (registerpw !== checkpw) {
-        alert("兩次密碼輸入不一致");
+        showError("密碼確認不一致，請重新輸入");
         return;
     }
 
@@ -172,23 +184,33 @@ function addmember(e) {
         password: registerpw
     };
 
+    // 4. 發送 AJAX
     $.ajax({
         url: API_BASE_URL + "/register",
         type: "post",
         contentType: "application/json",
         data: JSON.stringify(memData),
         success: (data) => {
-            alert("註冊成功，請重新登入");
-            location.href = "index.html"; // 回首頁準備登入
+            alert("註冊成功！請重新登入");
+            location.href = "login.html"; // 註冊成功跳轉去登入頁
         },
         error: function(xhr) {
+            // ⭐ 顯示後端回傳的錯誤訊息 (例如：Email已註冊)
             if (xhr.status === 409) {
-                alert("註冊失敗：" + xhr.responseText);
+                showError(xhr.responseText); // 後端傳回的純文字訊息
             } else {
-                alert("註冊失敗，請檢查資料格式");
+                showError("註冊失敗，請稍後再試 (" + xhr.status + ")");
+                console.error(xhr);
             }
         }
     });
+}
+
+// ⭐ 輔助函數：顯示錯誤訊息
+function showError(message) {
+    $("#errorMsg").removeClass("d-none").text(message);
+    // 讓畫面捲動到錯誤訊息處
+    document.getElementById("errorMsg").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 /* =========================================
