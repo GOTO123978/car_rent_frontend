@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>會員中心 | GOTO Rent</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+    <style>
+        body {
+            padding-top: 70px;
+            background-color: #f4f7f9;
+        }
+
+        /* 左側個人資訊卡 */
+        .profile-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: #e9ecef;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #6c757d;
+        }
+
+        /* 右側表單卡 */
+        .settings-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-section-title {
+            border-bottom: 2px solid #f8f9fa;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #495057;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Gjun Rent</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">首頁</a></li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm ms-3" onclick="goMyOrder()">
+                            我的訂單
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-danger btn-sm ms-3" onclick="handleLogout()">
+                            登出
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row g-4">
+
+            <div class="col-lg-4">
+                <div class="profile-card">
+                    <div class="profile-avatar">👤</div>
+                    <h4 class="fw-bold" id="display-name">載入中...</h4>
+                    <p class="text-muted mb-1" id="display-id">ID: --</p>
+                    <span class="badge bg-success">一般會員</span>
+                    <hr>
+                    <div class="text-start small">
+                        <p class="mb-2"><strong>註冊日期：</strong> <span id="display-date"></span></p>
+                        <p class="mb-2"><strong>手機號碼：</strong> <span id="display-phone"></span></p>
+                        <p class="mb-0"><strong>身分證號：</strong> <span id="display-idn"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="settings-card">
+
+                    <h5 class="form-section-title">📝 修改基本資料</h5>
+                    <form id="updateInfoForm" onsubmit="return false;">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Email (帳號)</label>
+                                <input type="email" class="form-control" id="updateemail">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">通訊地址</label>
+                                <input type="text" class="form-control" id="updateaddress">
+                            </div>
+                            <div class="col-12 text-end">
+                                <button class="btn btn-primary" id="submitupdate">儲存變更</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <h5 class="form-section-title mt-5">🔒 修改密碼</h5>
+                    <form id="updatePwForm" onsubmit="return false;">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">舊密碼</label>
+                                <input type="password" class="form-control" id="originalpw">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">新密碼</label>
+                                <input type="password" class="form-control" id="newpw1">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">確認新密碼</label>
+                                <input type="password" class="form-control" id="newpw2">
+                            </div>
+                            <div class="col-12 text-end">
+                                <button class="btn btn-warning text-dark" id="pwupdate">變更密碼</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/member.js"></script>
+
+    <script>
+        // 頁面載入後執行
+        $(document).ready(async function () {
+            // 1. 檢查登入狀態 (使用 member.js 的函數)
+            const valid = await checkLoginStatusAsync();
+            if (!valid) {
+                alert("請先登入");
+                window.location.href = "index.html";
+                return;
+            }
+
+            // 2. 從 SessionStorage 讀取資料並填入畫面
+            // 注意：這裡的 Key 必須跟 member.js 存入的一致
+            const memName = sessionStorage.getItem("memberName");
+            const memId = sessionStorage.getItem("memberId");
+            const memIdNum = sessionStorage.getItem("memberIdNumber") || ""; // 需確認 loginresult 有存這個
+            const memPhone = sessionStorage.getItem("memberPhone");
+            const memDate = sessionStorage.getItem("memberRegisterDate"); // 需確認 loginresult 有存這個
+            const memEmail = sessionStorage.getItem("memberEmail");
+            const memAddress = sessionStorage.getItem("memberAddress");
+
+            // 填入文字顯示區
+            $("#display-name").text(memName);
+            $("#display-id").text("ID: " + memId);
+            $("#display-date").text(memDate);
+
+            // 遮蔽個資處理
+            const maskedId = memIdNum.length > 7 ? memIdNum.substring(0, 4) + "***" + memIdNum.substring(memIdNum.length - 3) : memIdNum;
+            const maskedPhone = memPhone.length > 7 ? memPhone.substring(0, 4) + "***" + memPhone.substring(memPhone.length - 3) : memPhone;
+
+            $("#display-idn").text(maskedId);
+            $("#display-phone").text(maskedPhone);
+
+            // 填入表單輸入框
+            $("#updateemail").val(memEmail);
+            $("#updateaddress").val(memAddress);
+
+            // 3. 綁定修改資料按鈕
+            $("#submitupdate").click(function () {
+                $.ajax({
+                    url: "http://localhost:8080/updatemember",
+                    type: "PUT",
+                    contentType: "application/json",
+                    // ⭐ JWT Header
+                    headers: { "Authorization": "Bearer " + sessionStorage.getItem("jwtToken") },
+                    data: JSON.stringify({
+                        memberId: memId, // 辨識使用者
+                        email: $("#updateemail").val(),
+                        address: $("#updateaddress").val()
+                    }),
+                    success: function (res) {
+                        alert("資料更新成功！");
+                        // 更新 SessionStorage
+                        sessionStorage.setItem("memberEmail", res.email);
+                        sessionStorage.setItem("memberAddress", res.address);
+                    },
+                    error: function () {
+                        alert("更新失敗，請稍後再試");
+                    }
+                });
+            });
+
+            // 4. 綁定修改密碼按鈕
+            $("#pwupdate").click(function () {
+                const oldPw = $("#originalpw").val();
+                const newPw1 = $("#newpw1").val();
+                const newPw2 = $("#newpw2").val();
+
+                if (newPw1 !== newPw2) {
+                    alert("兩次新密碼輸入不一致");
+                    return;
+                }
+
+                $.ajax({
+                    url: "http://localhost:8080/updatepassword",
+                    type: "PUT",
+                    // ⭐ 注意：後端 Controller 這裡是用 @RequestParam，不是 @RequestBody
+                    headers: { "Authorization": "Bearer " + sessionStorage.getItem("jwtToken") },
+                    data: {
+                        memid: memId,
+                        oldpw: oldPw,
+                        newpw: newPw1
+                    },
+                    success: function () {
+                        alert("密碼修改成功，請重新登入");
+                        handleLogout();
+                    },
+                    error: function (xhr) {
+                        alert("修改失敗：" + (xhr.responseText || "舊密碼錯誤"));
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
