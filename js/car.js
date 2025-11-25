@@ -32,7 +32,7 @@ const app = Vue.createApp({
                 // 處理圖片路徑
                 this.cars = (data || []).map(c => ({
                     ...c,
-                    validImage: c.imagePath ? c.imagePath : "https://fakeimg.pl/400x250/?text=No+Image"
+                    validImage: ('.' + c.imagePath)   // 直接使用 API 路徑
                 }));
                 
             } catch (err) {
