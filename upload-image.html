@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>車輛圖片上傳</title>
+</head>
+
+<body>
+    <h2>車輛圖片上傳</h2>
+
+    <label>車輛 ID：</label>
+    <input type="number" id="carId" /><br><br>
+
+    <label>選擇圖片：</label>
+    <input type="file" id="imageFile" accept="image/*" /><br><br>
+
+    <button onclick="uploadImage()">上傳圖片</button>
+
+
+    <script>
+        const API_BASE = "http://localhost:8080/api/adscar";
+
+        async function uploadImage() {
+            const id = document.getElementById("carId").value;
+            const file = document.getElementById("imageFile").files[0];
+
+            if (!id || !file) {
+                alert("請選擇車輛 ID 與圖片");
+                return;
+            }
+
+            const form = new FormData();
+            form.append("file", file);
+
+            const resp = await fetch(`${API_BASE}/${id}/upload-image`, {
+                method: "POST",
+                body: form
+            });
+
+            const text = await resp.text();
+            alert(text);
+        }
+    </script>
+</body>
+
+</html>

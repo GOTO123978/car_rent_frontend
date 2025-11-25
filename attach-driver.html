@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>附駕接送服務 | Gjun Rent</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+
+    <style>
+        :root {
+            --bs-primary-rgb: 40, 167, 69;
+            --bs-primary: #28a745;
+        }
+
+        body {
+            padding-top: 70px;
+            background-color: #f4f7f9;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .step-title {
+            border-left: 5px solid var(--bs-primary);
+            padding-left: 15px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        /* 車輛卡片樣式 */
+        .vehicle-card {
+            border: 2px solid transparent;
+            border-radius: 10px;
+            transition: 0.3s;
+            cursor: pointer;
+            height: 100%;
+            /* 確保高度一致 */
+        }
+
+        .vehicle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-color: var(--bs-primary);
+        }
+
+        .vehicle-img {
+            height: 160px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Gjun Rent</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">首頁</a></li>
+
+                    <li class="nav-item dropdown">
+                        <button class="nav-link dropdown-toggle btn btn-link p-0" id="branchDropdown"
+                            data-bs-toggle="dropdown">服務據點</button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="branches.html?region=北部">北部租車</a></li>
+                            <li><a class="dropdown-item" href="branches.html?region=中部">中部租車</a></li>
+                            <li><a class="dropdown-item" href="branches.html?region=南部">南部租車</a></li>
+                            <li><a class="dropdown-item" href="branches.html?region=東部">東部租車</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="branches.html?region=ALL">所有據點</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item"><button class="btn btn-outline-light btn-sm ms-3"
+                            onclick="location.href='http://localhost:8080/reserve'">預約租車</button></li>
+                    <li class="nav-item"><a class="nav-link active" href="attach-driver.html">附駕接送</a></li>
+
+                    <li class="nav-item"><button class="btn btn-outline-light btn-sm ms-3" id="myorderbtn"
+                            style="display:none;" onclick="goMyOrder()">我的訂單</button></li>
+                    <li class="nav-item"><button class="btn btn-outline-light btn-sm ms-3" id="memberCenterBtn"
+                            style="display:none;" onclick="location.href='member.html'">會員中心</button></li>
+                    <li class="nav-item"><button class="btn btn-outline-light btn-sm ms-3" id="loginout"
+                            data-bs-toggle="modal" data-bs-target="#loginModal">會員登入</button></li>
+                    <li class="nav-item ms-3 d-flex align-items-center"><span id="welcome-message"
+                            class="text-warning fw-bold"></span></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <h2 class="text-center mb-4 fw-bold text-secondary">專屬司機接送服務</h2>
+
+        <div class="form-card" id="step1-card">
+            <h4 class="step-title">Step 1. 設置接送條件</h4>
+            <form id="conditionForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">姓名</label>
+                        <input type="text" id="userName" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">電話 (10碼)</label>
+                        <input type="tel" id="userPhone" class="form-control" pattern="\d{10}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="userEmail" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">出發地點</label>
+                        <select id="pickupPlace" class="form-select" required>
+                            <option value="">請選擇</option>
+                            <optgroup label="台灣機場">
+                                <option>松山國際機場</option>
+                                <option>桃園國際機場</option>
+                                <option>清泉崗國際機場</option>
+                                <option>小港國際機場</option>
+                            </optgroup>
+                            <optgroup label="台灣高鐵">
+                                <option>高鐵-台北站</option>
+                                <option>高鐵-台中站</option>
+                                <option>高鐵-台南站</option>
+                                <option>高鐵-左營站</option>
+                            </optgroup>
+                            <optgroup label="都會接送">
+                                <option>台北市</option>
+                                <option>台中市</option>
+                                <option>高雄市</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">目的地點</label>
+                        <select id="dropoffPlace" class="form-select" required>
+                            <option value="">請選擇</option>
+                            <optgroup label="台灣機場">
+                                <option>松山國際機場</option>
+                                <option>桃園國際機場</option>
+                                <option>清泉崗國際機場</option>
+                                <option>小港國際機場</option>
+                            </optgroup>
+                            <optgroup label="台灣高鐵">
+                                <option>高鐵-台北站</option>
+                                <option>高鐵-台中站</option>
+                                <option>高鐵-台南站</option>
+                                <option>高鐵-左營站</option>
+                            </optgroup>
+                            <optgroup label="都會接送">
+                                <option>台北市</option>
+                                <option>台中市</option>
+                                <option>高雄市</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">用車日期</label>
+                        <input type="date" id="pickupDate" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">出發時間</label>
+                        <input type="time" id="pickupTime" class="form-control" required>
+                    </div>
+
+                    <div class="col-12 text-end mt-4">
+                        <button type="button" id="showVehiclesBtn" class="btn btn-primary px-5"
+                            onclick="showVehicles()">
+                            下一步：選擇車型 <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-card" id="step2" style="display: none;">
+            <h4 class="step-title">Step 2. 選擇服務車型</h4>
+            <div id="vehicle-list" class="row g-4"></div>
+        </div>
+
+        <div class="form-card" id="step3" style="display: none;">
+            <h4 class="step-title">Step 3. 確認訂單資訊</h4>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label text-muted">已選車型</label>
+                    <input type="text" id="vehicleName" class="form-control fw-bold" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">乘客人數</label>
+                    <input type="number" id="passengerCount" class="form-control" min="1" value="1">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">需要行李服務？</label>
+                    <select id="luggage" class="form-select">
+                        <option value="no">不需要</option>
+                        <option value="yes">需要</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">舉牌服務 (+200元)</label>
+                    <select class="form-select" id="signage">
+                        <option value="no">否</option>
+                        <option value="yes">是</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label text-muted">預估距離</label>
+                    <div class="input-group">
+                        <input type="text" id="distance" class="form-control" readonly>
+                        <span class="input-group-text">km</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted">預估費用</label>
+                    <input type="text" id="price" class="form-control text-danger fw-bold fs-5" readonly>
+                </div>
+
+                <div class="col-12 d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary" onclick="goBackToStep2()">
+                        <i class="bi bi-arrow-left"></i> 上一步
+                    </button>
+                    <button type="button" class="btn btn-success px-5 fw-bold" onclick="submitOrder()">
+                        確認送出訂單 <i class="bi bi-check-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4">
+                <div class="modal-body">
+                    <div class="text-success display-1 mb-3"><i class="bi bi-check-circle-fill"></i></div>
+                    <h3 class="fw-bold mb-3">訂單成立成功！</h3>
+                    <p class="text-muted mb-4">訂單編號：<span id="modalOrderNo" class="fw-bold text-dark"></span></p>
+                    <p class="small text-muted">我們已收到您的預約，將儘快指派司機為您服務。</p>
+
+                    <div class="d-grid gap-2">
+                        <button onclick="location.href='order-search.html'"
+                            class="btn btn-outline-primary">查詢訂單紀錄</button>
+                        <button onclick="location.href='index.html'" class="btn btn-dark">返回首頁</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">會員登入</h5><button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm" onsubmit="return false;">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">帳號</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">密碼</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <a href="register.html">註冊</a>
+                    <button class="btn btn-primary" id="login">登入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="js/member.js"></script>
+
+    <script src="js/attach-driver.js"></script>
+
+</body>
+
+</html>
