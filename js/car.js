@@ -3,8 +3,8 @@ const app = Vue.createApp({
         return {
             cars: [],
             page: 1,
-            perPage: 10,
-            loading: true   // Skeleton UI 控制（仍保留頁面載入動畫，但圖片不再使用 fallback）
+            perPage: 12, // 配合 RWD，建議設為 4 的倍數 (12, 16...)
+            loading: true
         };
     },
 
@@ -22,17 +22,17 @@ const app = Vue.createApp({
     methods: {
         async fetchCars() {
             this.loading = true;
-
             try {
+                // 指向後端 API
                 const res = await fetch("http://localhost:8080/api/car");
                 if (!res.ok) throw new Error("API 回傳錯誤");
 
                 const data = await res.json();
 
-                // 直接使用 API 提供的 image_path，不再使用 fallback
+                // 處理圖片路徑
                 this.cars = (data || []).map(c => ({
                     ...c,
-                    validImage: c.image_path   // 直接使用 API 路徑
+                    validImage: c.imagePath ? c.imagePath : "https://fakeimg.pl/400x250/?text=No+Image"
                 }));
                 
             } catch (err) {
@@ -43,17 +43,12 @@ const app = Vue.createApp({
             }
         },
 
-        // 取消圖片錯誤 fallback
-        onImgError(event) {
-            // 不做任何處理，保留 API 的圖片連結
-        },
-
-        gotoDetail(car) {
-            alert(`前往車輛詳細頁面（ID=${car.id}）\n（尚未實作頁面）`);
-        },
-
         gotoBuy(car) {
-            alert(`前往購買頁面（ID=${car.id}）\n（尚未實作頁面）`);
+            // ⭐ 修改：直接跳轉到後端的預約頁面 (與 index.html 行為一致)
+            // 如果想帶入車輛 ID，可以改為: 
+            // window.location.href = `http://localhost:8080/reserve?preSelectCar=${car.id}`;
+            // (前提是您的 ReserveController 有寫接收參數的邏輯，若無則直接跳轉即可)
+            window.location.href = "http://localhost:8080/reserve";
         }
     },
 
