@@ -215,9 +215,15 @@ function calculatePrice() {
 async function submitOrder() {
   if (!selectedCarId) { alert("請先選擇車型"); return; }
 
-  // 取得會員 ID (如果有登入)
-  const memberId = sessionStorage.getItem("memberId");
-
+// 1. 取得 Token
+  const token = sessionStorage.getItem("jwtToken");
+  if (!token) {
+      alert("請先登入會員才能預約！");
+      // 打開登入 Modal
+      const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+      loginModal.show();
+      return;
+  }
   const order = {
     name: document.getElementById('userName').value.trim(),
     phone: document.getElementById('userPhone').value.trim(),
@@ -239,7 +245,11 @@ async function submitOrder() {
   try {
     const resp = await fetch(`${API_BASE}/api/orders`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+     headers: { 
+          "Content-Type": "application/json",
+          // ⭐ 新增：帶入 JWT Token
+          "Authorization": "Bearer " + token 
+      },
       body: JSON.stringify(order)
     });
 

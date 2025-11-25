@@ -255,3 +255,20 @@ $(document).ready(function () {
         // 維持 HTML 原本的 data-bs-toggle="modal" 屬性，不做額外 JS 綁定，讓它開啟 Modal
     }
 });
+
+function goToAttachDriver() {
+    // 1. 檢查 SessionStorage 是否有 Token
+    const token = sessionStorage.getItem("jwtToken");
+    
+    if (token) {
+        // 2. 有登入 -> 允許進入附駕頁面
+        location.href = 'attach-driver.html';
+    } else {
+        // 3. 沒登入 -> 提示並彈出登入視窗
+        // (您可以換成 SweetAlert2 以求美觀)
+        alert("請先登入會員，才能使用附駕接送服務！");
+        
+        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        loginModal.show();
+    }
+}

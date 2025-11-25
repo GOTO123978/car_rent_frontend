@@ -83,15 +83,13 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-outline-light btn-sm ms-lg-3"
-                            onclick="location.href='attach-driver.html'">
-                            附駕服務
-                        </button>
+                        <a class="nav-link" href="javascript:void(0)" onclick="goToAttachDriver()">
+                            附駕接送
+                        </a>
                     </li>
 
                     <li class="nav-item">
-                        <button class="btn btn-outline-light btn-sm ms-lg-3"
-                            onclick="location.href='http://localhost:8080/reserve'">
+                        <button class="btn btn-outline-light btn-sm ms-lg-3" onclick="goToReserve()">
                             預約租車
                         </button>
                     </li>
@@ -145,7 +143,7 @@
                         <option value="">載入中...</option>
                     </select>
                 </div>
-
+                <!-- 
                 <div class="col-lg-2 col-md-6">
                     <label for="pickupDate" class="form-label small fw-bold text-muted">🗓️ 取車日期</label>
                     <input type="date" class="form-control" id="pickupDate">
@@ -154,7 +152,7 @@
                 <div class="col-lg-2 col-md-6">
                     <label for="returnDate" class="form-label small fw-bold text-muted">🗓️ 還車日期</label>
                     <input type="date" class="form-control" id="returnDate">
-                </div>
+                </div> -->
 
                 <div class="col-lg-2 col-md-6">
                     <label for="carType" class="form-label small fw-bold text-muted">🚗 座位</label>
@@ -166,8 +164,8 @@
                 </div>
 
                 <div class="col-lg-1 col-12 d-grid">
-                    <button type="button" id="searchBtn" class="btn btn-primary btn-lg">
-                        <i class="bi bi-search"></i>
+                    <button type="button" id="searchBtn" class="btn btn-primary btn-lg" onclick="goToReserve() ">
+                        <i class="bi bi-search">開始租車</i>
                     </button>
                 </div>
             </form>
@@ -224,6 +222,22 @@
     <script src="js/member.js"></script>
 
     <script>
+        function goToReserve() {
+            // 1. 檢查是否有 Token
+            const token = sessionStorage.getItem("jwtToken");
+
+            if (token) {
+                // 2. 有登入：將 Token 作為參數傳遞給後端
+                // 後端 PageController 會接收這個 token 並建立 Session
+                window.location.href = `http://localhost:8080/reserve?token=${token}`;
+            } else {
+                // 3. 沒登入：提示並打開登入視窗
+                // (也可以用 SweetAlert2: Swal.fire('請先登入', '', 'warning'))
+                alert("請先登入會員才能預約！");
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            }
+        }
         let allCarsData = [];
 
         /* =========================================

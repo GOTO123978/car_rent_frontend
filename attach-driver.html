@@ -287,7 +287,17 @@
             </div>
         </div>
     </div>
+    <script>
+        window.onload = function () {
+            const token = sessionStorage.getItem("jwtToken");
+            if (!token) {
+                alert("請先登入會員");
+                location.href = "index.html"; // 踢回首頁
+            }
+            // ... (原本的 onload 邏輯) ...
+        };
 
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="js/member.js"></script>
